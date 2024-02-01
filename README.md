@@ -11,6 +11,12 @@ we'll learn about [chroot](https://en.wikipedia.org/wiki/Chroot),
 
 # Quick Start
 
+## Init Project
+
+```sh
+git submodule update --init --recursive
+```
+
 ## Setup Environment
 
 Please ensure you have [Docker installed](https://docs.docker.com/get-docker/)
