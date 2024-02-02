@@ -6,7 +6,9 @@
 #
 # DON'T EDIT THIS!
 exec cargo run \
-    # --quiet \
+    --quiet \
     --release \
     --target-dir=/tmp/codecrafters-docker-target \
     --manifest-path "$(dirname "$0")/Cargo.toml" "$@"
+
+# exec cargo run --verbose --release --target-dir=/tmp/codecrafters-docker-target --manifest-path "$(dirname "$0")/Cargo.toml" "$@"
