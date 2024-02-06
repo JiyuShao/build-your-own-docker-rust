@@ -1,10 +1,30 @@
 #!/bin/sh
 
-# 执行 shell 命令，并输出命令的结果
-bash -c "ll"
+# 待执行的命令
+# command="ll"
+# command='echo "This is a stdout output" >&1'
+command='echo "This is a stderr output" >&2'
 
-# 获取退出代码
+# 创建临时文件
+stdout_file=$(mktemp)
+stderr_file=$(mktemp)
+
+# 执行 shell 命令，并输出到临时文件中
+bash -c "$command" > "$stdout_file" 2>"$stderr_file"
+
+# 获取退出 code
 exit_code=$?
+
+# 读取标准输出
+stdout=$(cat "$stdout_file")
+
+# 读取标准错误
+stderr=$(cat "$stderr_file")
+
+# 删除临时文件
+echo "rm $stdout_file $stderr_file"
+rm "$stdout_file" "$stderr_file"
+
 
 # 根据退出代码进行错误判断
 if [ $exit_code -eq 0 ]; then
@@ -23,3 +43,6 @@ else
     echo "Command Not Found: 127"
   fi
 fi
+
+echo "stdout: $stdout"
+echo "stderr: $stderr"

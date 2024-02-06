@@ -25,7 +25,7 @@ locally.
 Next, add a [shell alias](https://shapeshed.com/unix-alias/):
 
 ```sh
-alias mydocker='docker build -t mydocker . && docker run --cap-add="SYS_ADMIN" mydocker'
+alias mydocker='docker build -t mydocker ./docker && docker run --cap-add="SYS_ADMIN" mydocker'
 ```
 
 (The `--cap-add="SYS_ADMIN"` flag is required to create
@@ -37,6 +37,8 @@ You can now execute your program like this:
 
 ```sh
 mydocker run ubuntu:latest /usr/local/bin/docker-explorer echo hey
+mydocker run ubuntu:latest bash -c 'echo "This is a stdout output" >&1'
+mydocker run ubuntu:latest bash -c 'echo "This is a stderr output" >&2'
 ```
 
 This command compiles your Rust project, so it might be slow the first time you

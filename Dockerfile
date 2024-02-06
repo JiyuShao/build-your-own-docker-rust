@@ -13,12 +13,6 @@ RUN chmod +x /usr/local/bin/docker-explorer
 
 WORKDIR /app
 
-# Cache go modules
-COPY ./tester/go.mod /app/go.mod
-COPY ./tester/go.sum /app/go.sum
-RUN go mod download
-COPY ./tester /app
-
 # Cache rust dependencies
 COPY ./docker/Cargo.toml /app/docker/Cargo.toml
 COPY ./docker/Cargo.lock /app/docker/Cargo.lock
@@ -27,7 +21,15 @@ RUN echo 'fn main() { println!("Hello World!"); }' > /app/docker/src/main.rs
 RUN cargo build --release --target-dir=/tmp/codecrafters-docker-target --manifest-path=/app/docker/Cargo.toml
 RUN cargo clean -p docker-starter-rust --release --target-dir=/tmp/codecrafters-docker-target --manifest-path=/app/docker/Cargo.toml
 
-# Pre-Compile rust docker command
+# Cache go modules
+COPY ./tester/go.mod /app/go.mod
+COPY ./tester/go.sum /app/go.sum
+RUN go mod download
+
+# Copy tester
+COPY ./tester /app
+
+# Copy docker & Pre-Compile rust docker command
 COPY ./docker /app/docker
 RUN sed -i -e 's/\r$//' /app/docker/your_docker.sh
 ENV CODECRAFTERS_SUBMISSION_DIR="/app/docker"
