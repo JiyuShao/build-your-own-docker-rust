@@ -4,6 +4,9 @@ use std::{
     os::unix::fs::chroot,
     path::{Path, PathBuf},
 };
+use libc;
+
+const DEBUG: bool = false;
 
 // Usage: your_docker.sh run <image> <command> <arg1> <arg2> ...
 fn main() -> Result<()> {
@@ -14,17 +17,21 @@ fn main() -> Result<()> {
     let args: Vec<_> = std::env::args().collect();
     let command = &args[3];
     let command_args = &args[4..];
-    // println!(
-    //     "Running: {} {}",
-    //     command,
-    //     command_args
-    //         .iter()
-    //         .map(|s| format!("<{}>", s))
-    //         .collect::<Vec<String>>()
-    //         .join(" ")
-    // );
+    if DEBUG == true {
+        println!(
+            "Running: {} {}",
+            command,
+            command_args
+                .iter()
+                .map(|s| format!("<{}>", s))
+                .collect::<Vec<String>>()
+                .join(" ")
+        );
+    }
 
-    let _ = setup_root_dir(command);
+    setup_filesystem_isolation(command)?;
+    setup_process_isolation();
+
     let output = Command::new(command)
         .args(command_args)
         .stdout(Stdio::piped())
@@ -38,10 +45,14 @@ fn main() -> Result<()> {
         })?;
 
     let std_out = std::str::from_utf8(&output.stdout)?;
-    // print!("\nstdout: ");
+    if DEBUG == true {
+        print!("\nstdout: ");
+    }
     print!("{}", std_out);
     let std_err = std::str::from_utf8(&output.stderr)?;
-    // eprint!("\nstderr: ");
+    if DEBUG == true {
+        eprint!("\nstderr: ");
+    }
     eprint!("{}", std_err);
 
     if !output.status.success() {
@@ -51,7 +62,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn setup_root_dir(command: &str) -> Result<()> {
+fn setup_filesystem_isolation(command: &str) -> Result<()> {
     // container_path: /tmp/your_docker_container/
     let container_path = Path::new("/tmp/your_docker_container");
     std::fs::create_dir_all(container_path.join("dev/null"))?;
@@ -59,11 +70,13 @@ fn setup_root_dir(command: &str) -> Result<()> {
     let command_path = PathBuf::from(command);
     let command_file_name = command_path.file_name().unwrap();
     let dest_command_path = container_path.join(command_path.parent().unwrap().strip_prefix("/")?);
-    // println!(
-    //     "command_path: {}; command_path: {}",
-    //     command_path.display(),
-    //     dest_command_path.display()
-    // );
+    if DEBUG == true {
+        println!(
+            "command_path: {}; command_path: {}",
+            command_path.display(),
+            dest_command_path.display()
+        );
+    }
 
     std::fs::create_dir_all(dest_command_path.clone())?;
     std::fs::copy(
@@ -75,4 +88,10 @@ fn setup_root_dir(command: &str) -> Result<()> {
     std::env::set_current_dir("/")?;
 
     Ok(())
+}
+
+fn setup_process_isolation() -> () {
+    unsafe {
+        libc::unshare(libc::CLONE_NEWPID);
+    }
 }
